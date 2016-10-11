@@ -8,13 +8,14 @@ using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web.Http;
+using DevTeam.FileFormatter;
 using Newtonsoft.Json;
 
 namespace DevTeam.ImageFormatter
 {
-    public class ImageFormatter : MediaTypeFormatter
+    public class FileFormatter : MediaTypeFormatter
     {
-        public ImageFormatter()
+        public FileFormatter()
         {
             SupportedMediaTypes.Add(new MediaTypeHeaderValue("image/jpeg"));
             SupportedMediaTypes.Add(new MediaTypeHeaderValue("image/jpg"));
@@ -24,7 +25,7 @@ namespace DevTeam.ImageFormatter
 
         public override bool CanReadType(Type type)
         {
-            return typeof(ImageContentList).IsAssignableFrom(type);
+            return typeof(FileContentList).IsAssignableFrom(type);
         }
 
         public override bool CanWriteType(Type type)
@@ -43,17 +44,17 @@ namespace DevTeam.ImageFormatter
             var formData = await content.ReadAsMultipartAsync(provider);
 
             var imageContent = formData.Contents
-                .Where(c => SupportedMediaTypes.Contains(c.Headers.ContentType))
+                .Where(c => !string.IsNullOrEmpty(c.Headers.ContentDisposition.FileName))
                 .Select(i => ReadContent(i).Result)
                 .ToList();
 
             var jsonContent = formData.Contents
-                .Where(c => !SupportedMediaTypes.Contains(c.Headers.ContentType))
+                .Where(c => string.IsNullOrEmpty(c.Headers.ContentDisposition.FileName))
                 .Select(j => ReadJson(j).Result)
                 .ToDictionary(x => x.Key, x => x.Value);
 
             var json = JsonConvert.SerializeObject(jsonContent);
-            var model = JsonConvert.DeserializeObject(json, type) as ImageContentList;
+            var model = JsonConvert.DeserializeObject(json, type) as FileContentList;
 
             if (model == null)
             {
@@ -66,17 +67,17 @@ namespace DevTeam.ImageFormatter
             return model;
         }
 
-        private async Task<KeyValuePair<string, ImageContent>> ReadContent(HttpContent content)
+        private async Task<KeyValuePair<string, FileContent>> ReadContent(HttpContent content)
         {
             var name = content.Headers.ContentDisposition.Name.Replace("\"", string.Empty);
             var data = await content.ReadAsByteArrayAsync();
-            var image = new ImageContent
+            var image = new FileContent
             {
                 Content = data,
                 ContentType = content.Headers.ContentType.MediaType,
                 Name = content.Headers.ContentDisposition.FileName
             };
-            return new KeyValuePair<string, ImageContent>(name, image);
+            return new KeyValuePair<string, FileContent>(name, image);
         }
 
         private async Task<KeyValuePair<string, object>> ReadJson(HttpContent content)

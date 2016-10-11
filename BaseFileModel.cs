@@ -1,6 +1,6 @@
-﻿namespace DevTeam.ImageFormatter
+﻿namespace DevTeam.FileFormatter
 {
-    public class BaseImageModel
+    public class BaseFileModel
     {
         public byte[] Content { get; set; }
         public string ContentType { get; set; }

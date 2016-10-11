@@ -1,6 +1,6 @@
-﻿namespace DevTeam.ImageFormatter
+﻿namespace DevTeam.FileFormatter
 {
-    public class ImageContent
+    public class FileContent
     {
         public string Name { get; set; }
         public string ContentType { get; set; }
